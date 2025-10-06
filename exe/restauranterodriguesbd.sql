@@ -1,0 +1,118 @@
+SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
+SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
+SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
+
+CREATE SCHEMA IF NOT EXISTS `restauranterodriguesdb` DEFAULT CHARACTER SET utf8 ;
+USE `restauranterodriguesdb` ;
+
+CREATE TABLE IF NOT EXISTS `restauranterodriguesdb`.`cardapio` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `nome_prato` VARCHAR(45) NOT NULL,
+  `preco` DECIMAL(9,2) NOT NULL,
+  `descricao` VARCHAR(100) NOT NULL,
+  PRIMARY KEY (`id`))
+ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS `restauranterodriguesdb`.`mesas` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `status` VARCHAR(15) NOT NULL,
+  PRIMARY KEY (`id`))
+ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS `restauranterodriguesdb`.`pedidos` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `cpf_cliente` VARCHAR(45) NULL,
+  `mesas_id` INT,
+  `valor_total` DECIMAL(9,2) NOT NULL DEFAULT(0.00),
+  `status` VARCHAR(19) DEFAULT("ABERTO"),
+  INDEX `fk_mesas_has_cardapio_mesas_idx` (`mesas_id` ASC) VISIBLE,
+  PRIMARY KEY (`id`),
+  CONSTRAINT `fk_mesas_has_cardapio_mesas`
+    FOREIGN KEY (`mesas_id`)
+    REFERENCES `restauranterodriguesdb`.`mesas` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+CREATE TABLE IF NOT EXISTS `restauranterodriguesdb`.`pratos` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `id_pedidos` INT NOT NULL,
+  `cardapio_id` INT NOT NULL,
+  `quantidade` INT NOT NULL,
+  INDEX `fk_cardapio_idx` (`cardapio_id` ASC) VISIBLE,
+  INDEX `fk_pedidos_idx` (`id_pedidos` ASC) VISIBLE,
+  PRIMARY KEY (`id`),
+  CONSTRAINT `fk_cardapio`
+    FOREIGN KEY (`cardapio_id`)
+    REFERENCES `restauranterodriguesdb`.`cardapio` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `fk_pedidos`
+    FOREIGN KEY (`id_pedidos`)
+    REFERENCES `restauranterodriguesdb`.`pedidos` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION)
+ENGINE = InnoDB;
+
+INSERT INTO cardapio VALUES 
+(1, 'Strogonoff', 18.00, 'Acompanhada de arroz, feijão, farofa e salada'),
+(2, 'Calabresa acebolada', 15.00 ,'Acompanhada de arroz, feijão, farofa e salada'),
+(3, 'Filé de frango empanado', 20.00 ,'Acompanhada de arroz, feijão, farofa e salada'),
+(4, 'Costela suína', 19.00 ,'Acompanhada de arroz, feijão, farofa e salada'),
+(5, 'Frango à parmegiana', 25.00 ,'Acompanhada de arroz, feijão, farofa e salada'),
+(6, 'Bife acebolado', 17.00 , 'Acompanhada de arroz, feijão, farofa e salada'),
+(7, 'Linguiça assada', 15.00 ,'Acompanhada de arroz, feijão, farofa e salada'),
+(8, 'Frango ao molho', 15.00 ,'Acompanhada de arroz, feijão, farofa e salada');
+
+INSERT INTO mesas VALUES 
+(1, 'DISPONIVEL'),
+(2, 'DISPONIVEL'),
+(3, 'DISPONIVEL'),
+(4, 'DISPONIVEL'),
+(5, 'DISPONIVEL'),
+(6, 'DISPONIVEL'),
+(7, 'DISPONIVEL'),
+(8, 'DISPONIVEL'),
+(9, 'DISPONIVEL'),
+(10, 'DISPONIVEL');
+
+INSERT INTO pedidos (id, cpf_cliente, mesas_id, status) VALUES
+(1, NULL, 2, "FINALIZADO"),
+(2, '89574042103', 9, "FINALIZADO"),
+(3, NULL, 7, "FINALIZADO"),
+(4, NULL, 8, "FINALIZADO"),
+(5, '39762879112', 1, "FINALIZADO"),
+(6, NULL, 3, "FINALIZADO"),
+(7, '12205116843', 10, "FINALIZADO"),
+(8, NULL, 6, "FINALIZADO"),
+(9, NULL, 4, "FINALIZADO"),
+(10, NULL, 2, "FINALIZADO"),
+(11, '94705843681', 3, "FINALIZADO"),
+(12, '27911721734', 7, "FINALIZADO"),
+(13, NULL, 8, "FINALIZADO"),
+(14, NULL, 9, "FINALIZADO"),
+(15, '82188258436', 5, "FINALIZADO");
+
+INSERT INTO pratos (id_pedidos, cardapio_id, quantidade) VALUES 
+(1, 7, 1),
+(1, 2, 1),
+(2, 5, 2),
+(3, 1, 2),
+(4, 3, 1),
+(5, 7, 3),
+(6, 2, 2),
+(7, 4, 1),
+(8, 5, 2),
+(8, 6, 1),
+(9, 8, 1),
+(10, 6, 1),
+(11, 4, 2),
+(12, 2, 1),
+(12, 7, 2),
+(13, 3, 2),
+(14, 7, 1),
+(15, 7, 1);
+
+UPDATE pedidos p
+SET valor_total = (SELECT sum(pr.quantidade * c.preco) FROM 
+pratos pr JOIN cardapio c ON c.id = pr.cardapio_id WHERE pr.id_pedidos = p.id AND pr.cardapio_id = c.id) WHERE p.id = 1 OR p.id = 2 OR p.id = 3 OR p.id = 4 OR p.id = 5 OR p.id = 6 OR p.id = 7 OR p.id = 8 OR p.id = 9 OR p.id = 10 OR p.id = 11 OR p.id = 12 OR p.id = 13 OR p.id = 14 OR p.id = 15;
